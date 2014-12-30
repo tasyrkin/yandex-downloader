@@ -1,6 +1,10 @@
 package com.tasyrkin.yandex.downloader;
 
-import static com.tasyrkin.yandex.downloader.DownloadStateEnum.INITIAL;
+import static com.tasyrkin.yandex.downloader.DownloadState.CANCELLED;
+import static com.tasyrkin.yandex.downloader.DownloadState.FINISHED;
+import static com.tasyrkin.yandex.downloader.DownloadState.INITIAL;
+import static com.tasyrkin.yandex.downloader.DownloadState.IN_PROGRESS;
+import static com.tasyrkin.yandex.downloader.DownloadState.PAUSED;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,7 +33,7 @@ public class Downloader implements Runnable {
     public Downloader(final URL sourceUrl, final File destinationFile) {
         this.sourceUrl = sourceUrl;
         this.destinationFile = destinationFile;
-        setState(new DownloadState(INITIAL));
+        setState(INITIAL);
     }
 
     @Override
@@ -39,6 +43,8 @@ public class Downloader implements Runnable {
         InputStream inputStream = null;
         FileOutputStream fileOutputStream = null;
 
+        setState(IN_PROGRESS);
+
         try {
             connection = sourceUrl.openConnection();
 
@@ -46,7 +52,7 @@ public class Downloader implements Runnable {
             fileOutputStream = new FileOutputStream(destinationFile);
 
             int readCount;
-            while (checkIfPauseRequestedOrBlock() && 0 < (readCount = inputStream.read(buffer))) {
+            while (checkIfInProgressOrBlock() && 0 < (readCount = inputStream.read(buffer))) {
                 if (Thread.interrupted()) {
                     throw new InterruptedException();
                 }
@@ -54,12 +60,14 @@ public class Downloader implements Runnable {
                 fileOutputStream.write(buffer, 0, readCount);
             }
 
-            setState(new DownloadState(DownloadStateEnum.DONE));
+            fileOutputStream.flush();
+
+            setState(FINISHED);
 
         } catch (IOException e) {
             setState(new DownloadState(DownloadStateEnum.FAILED, e, e.getMessage()));
         } catch (InterruptedException e) {
-            setState(new DownloadState(DownloadStateEnum.CANCELLED));
+            setState(CANCELLED);
         } finally {
             if (fileOutputStream != null) {
                 try {
@@ -78,14 +86,17 @@ public class Downloader implements Runnable {
         this.downloadState = downloadState;
     }
 
-    private boolean checkIfPauseRequestedOrBlock() throws InterruptedException {
+    private boolean checkIfInProgressOrBlock() throws InterruptedException {
         pauseLock.lock();
         try {
             while (pauseRequest) {
+                setState(PAUSED);
                 pauseCondition.await();
             }
 
-            return false;
+            setState(IN_PROGRESS);
+
+            return true;
         } finally {
             pauseLock.unlock();
         }

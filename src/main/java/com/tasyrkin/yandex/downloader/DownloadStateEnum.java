@@ -7,6 +7,6 @@ public enum DownloadStateEnum {
     PAUSED,
     CANCELLED,
     FAILED,
-    DONE
+    FINISHED
 
 }

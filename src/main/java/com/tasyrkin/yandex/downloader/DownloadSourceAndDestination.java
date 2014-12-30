@@ -6,6 +6,8 @@ import java.io.File;
 
 import java.net.URL;
 
+import com.google.common.base.MoreObjects;
+
 public class DownloadSourceAndDestination {
     private URL sourceUrl;
     private File destinationFile;
@@ -55,5 +57,15 @@ public class DownloadSourceAndDestination {
         int result = sourceUrl.hashCode();
         result = 31 * result + destinationFile.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        //J-
+        return MoreObjects.toStringHelper(DownloadSourceAndDestination.class)
+                .add("sourceUrl", sourceUrl)
+                .add("destinationFile", destinationFile)
+                .toString();
+        //J+
     }
 }
