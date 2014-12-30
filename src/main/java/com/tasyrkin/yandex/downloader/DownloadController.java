@@ -2,7 +2,7 @@ package com.tasyrkin.yandex.downloader;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import static com.tasyrkin.yandex.downloader.DownloaderStateEnum.INITIAL;
+import static com.tasyrkin.yandex.downloader.DownloadStateEnum.INITIAL;
 
 import java.util.HashMap;
 import java.util.List;
@@ -84,9 +84,9 @@ public class DownloadController {
         }
     }
 
-    public Map<DownloadSourceAndDestination, DownloaderState> getState() {
+    public Map<DownloadSourceAndDestination, DownloadState> getState() {
 
-        final Map<DownloadSourceAndDestination, DownloaderState> result = new HashMap<>();
+        final Map<DownloadSourceAndDestination, DownloadState> result = new HashMap<>();
 
         if (threadsAndDownloaders != null) {
             for (Map.Entry<DownloadSourceAndDestination, ThreadAndDownloader> entry : threadsAndDownloaders.entrySet()) {
@@ -94,7 +94,7 @@ public class DownloadController {
             }
         } else {
             for (DownloadSourceAndDestination srcAndDst : sourcesAndDestinations) {
-                result.put(srcAndDst, new DownloaderState(INITIAL));
+                result.put(srcAndDst, new DownloadState(INITIAL));
             }
         }
 

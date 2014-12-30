@@ -1,6 +1,6 @@
 package com.tasyrkin.yandex.downloader;
 
-public enum DownloaderStateEnum {
+public enum DownloadStateEnum {
 
     INITIAL,
     IN_PROGRESS,

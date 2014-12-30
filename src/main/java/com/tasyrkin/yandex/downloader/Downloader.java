@@ -1,6 +1,6 @@
 package com.tasyrkin.yandex.downloader;
 
-import static com.tasyrkin.yandex.downloader.DownloaderStateEnum.INITIAL;
+import static com.tasyrkin.yandex.downloader.DownloadStateEnum.INITIAL;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,7 +18,7 @@ public class Downloader implements Runnable {
 
     private final URL sourceUrl;
     private final File destinationFile;
-    private DownloaderState downloaderState;
+    private DownloadState downloadState;
 
     private final Lock pauseLock = new ReentrantLock();
     private final Condition pauseCondition = pauseLock.newCondition();
@@ -29,7 +29,7 @@ public class Downloader implements Runnable {
     public Downloader(final URL sourceUrl, final File destinationFile) {
         this.sourceUrl = sourceUrl;
         this.destinationFile = destinationFile;
-        setState(new DownloaderState(INITIAL));
+        setState(new DownloadState(INITIAL));
     }
 
     @Override
@@ -54,12 +54,12 @@ public class Downloader implements Runnable {
                 fileOutputStream.write(buffer, 0, readCount);
             }
 
-            setState(new DownloaderState(DownloaderStateEnum.DONE));
+            setState(new DownloadState(DownloadStateEnum.DONE));
 
         } catch (IOException e) {
-            setState(new DownloaderState(DownloaderStateEnum.FAILED, e, e.getMessage()));
+            setState(new DownloadState(DownloadStateEnum.FAILED, e, e.getMessage()));
         } catch (InterruptedException e) {
-            setState(new DownloaderState(DownloaderStateEnum.CANCELLED));
+            setState(new DownloadState(DownloadStateEnum.CANCELLED));
         } finally {
             if (fileOutputStream != null) {
                 try {
@@ -70,12 +70,12 @@ public class Downloader implements Runnable {
 
     }
 
-    public synchronized DownloaderState getState() {
-        return downloaderState;
+    public synchronized DownloadState getState() {
+        return downloadState;
     }
 
-    private synchronized void setState(final DownloaderState downloaderState) {
-        this.downloaderState = downloaderState;
+    private synchronized void setState(final DownloadState downloadState) {
+        this.downloadState = downloadState;
     }
 
     private boolean checkIfPauseRequestedOrBlock() throws InterruptedException {
