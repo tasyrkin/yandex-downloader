@@ -1,6 +1,7 @@
 package com.tasyrkin.yandex.downloader;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Lists.newArrayList;
 
 import static com.tasyrkin.yandex.downloader.DownloadStateEnum.INITIAL;
 
@@ -30,12 +31,12 @@ public class DownloadController {
         }
     }
 
-    public DownloadController(final List<DownloadSourceAndDestination> sourcesAndDestinations) {
+    public DownloadController(final DownloadSourceAndDestination... sourcesAndDestinations) {
 
-        checkArgument(sourcesAndDestinations != null && !sourcesAndDestinations.isEmpty(),
-            "missing at least one download source and destination");
+        checkArgument(sourcesAndDestinations != null && sourcesAndDestinations.length > 0,
+            "Missing at least one download source and destination");
 
-        this.sourcesAndDestinations = sourcesAndDestinations;
+        this.sourcesAndDestinations = newArrayList(sourcesAndDestinations);
     }
 
     public void startDownload() {

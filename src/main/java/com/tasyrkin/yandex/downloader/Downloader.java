@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -18,7 +19,14 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.google.common.io.Closer;
+
 public class Downloader implements Runnable {
+
+    private static final Logger LOGGER = LogManager.getLogger(Downloader.class);
 
     private final URL sourceUrl;
     private final File destinationFile;
@@ -40,16 +48,15 @@ public class Downloader implements Runnable {
     public void run() {
 
         URLConnection connection = null;
-        InputStream inputStream = null;
-        FileOutputStream fileOutputStream = null;
+        final Closer closer = Closer.create();
 
         setState(IN_PROGRESS);
 
         try {
             connection = sourceUrl.openConnection();
 
-            inputStream = connection.getInputStream();
-            fileOutputStream = new FileOutputStream(destinationFile);
+            final InputStream inputStream = closer.register(connection.getInputStream());
+            final FileOutputStream fileOutputStream = closer.register(new FileOutputStream(destinationFile));
 
             int readCount;
             while (checkIfInProgressOrBlock() && 0 < (readCount = inputStream.read(buffer))) {
@@ -60,19 +67,21 @@ public class Downloader implements Runnable {
                 fileOutputStream.write(buffer, 0, readCount);
             }
 
-            fileOutputStream.flush();
-
             setState(FINISHED);
 
-        } catch (IOException e) {
-            setState(new DownloadState(DownloadStateEnum.FAILED, e, e.getMessage()));
         } catch (InterruptedException e) {
             setState(CANCELLED);
+        } catch (Exception e) {
+            setState(new DownloadState(DownloadStateEnum.FAILED, e));
         } finally {
-            if (fileOutputStream != null) {
-                try {
-                    fileOutputStream.close();
-                } catch (IOException e) { }
+            try {
+                closer.close();
+            } catch (IOException e) {
+                LOGGER.error("Failed to close input / output stream", e);
+            }
+
+            if (connection != null && connection instanceof HttpURLConnection) {
+                ((HttpURLConnection) connection).disconnect();
             }
         }
 
@@ -83,6 +92,10 @@ public class Downloader implements Runnable {
     }
 
     private synchronized void setState(final DownloadState downloadState) {
+        if (!downloadState.equals(this.downloadState)) {
+            LOGGER.debug("Changed state [{}] -> [{}]", this.downloadState, downloadState);
+        }
+
         this.downloadState = downloadState;
     }
 

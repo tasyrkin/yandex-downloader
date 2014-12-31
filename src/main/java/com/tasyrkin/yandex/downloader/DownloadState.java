@@ -12,17 +12,14 @@ public class DownloadState {
 
     private DownloadStateEnum downloadStateEnum;
     private Exception failureException;
-    private String failureMessage;
 
     public DownloadState(final DownloadStateEnum downloadStateEnum) {
-        this(downloadStateEnum, null, null);
+        this(downloadStateEnum, null);
     }
 
-    public DownloadState(final DownloadStateEnum downloadStateEnum, final Exception failureException,
-            final String failureMessage) {
+    public DownloadState(final DownloadStateEnum downloadStateEnum, final Exception failureException) {
         this.downloadStateEnum = downloadStateEnum;
         this.failureException = failureException;
-        this.failureMessage = failureMessage;
     }
 
     public DownloadStateEnum getDownloadStateEnum() {
@@ -33,17 +30,12 @@ public class DownloadState {
         return failureException;
     }
 
-    public String getFailureMessage() {
-        return failureMessage;
-    }
-
     @Override
     public String toString() {
         //J-
         return MoreObjects.toStringHelper(DownloadState.class)
                 .add("downloadStateEnum", downloadStateEnum)
                 .add("failureException", failureException)
-                .add("failureMessage", failureMessage)
                 .toString();
         //J+
     }
