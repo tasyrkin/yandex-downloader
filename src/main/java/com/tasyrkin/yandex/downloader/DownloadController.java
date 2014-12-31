@@ -61,16 +61,16 @@ public class DownloadController {
         }
     }
 
-    public void cancelDownload() {
+    public void requestDownloadCancel() {
         if (threadsAndDownloaders != null) {
             for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
-                threadAndDownloader.getThread().interrupt();
+                threadAndDownloader.getDownloader().requestCancel();
             }
         }
     }
 
     public void restartDownload() {
-        cancelDownload();
+        requestDownloadCancel();
         joinThreads();
         startDownload();
     }
@@ -87,19 +87,19 @@ public class DownloadController {
         }
     }
 
-    public void pauseDownload() {
+    public void requestDownloadPause() {
         if (threadsAndDownloaders != null) {
             for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
-                threadAndDownloader.getDownloader().pause();
+                threadAndDownloader.getDownloader().requestPause();
             }
         }
 
     }
 
-    public void resumeDownload() {
+    public void requestDownloadResume() {
         if (threadsAndDownloaders != null) {
             for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
-                threadAndDownloader.getDownloader().resume();
+                threadAndDownloader.getDownloader().requestResume();
             }
         }
     }

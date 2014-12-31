@@ -1,5 +1,7 @@
 package com.tasyrkin.yandex.downloader;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import static com.tasyrkin.yandex.downloader.DownloadState.CANCELLED;
 import static com.tasyrkin.yandex.downloader.DownloadState.FINISHED;
 import static com.tasyrkin.yandex.downloader.DownloadState.INITIAL;
@@ -32,13 +34,18 @@ public class Downloader implements Runnable {
     private final File destinationFile;
     private DownloadState downloadState;
 
-    private final Lock pauseLock = new ReentrantLock();
-    private final Condition pauseCondition = pauseLock.newCondition();
+    private final Lock requestsGuard = new ReentrantLock();
+    private final Condition requestsCondition = requestsGuard.newCondition();
     private boolean pauseRequest = false;
+    private boolean cancelRequest = false;
 
     private static final byte[] buffer = new byte[1024];
 
     public Downloader(final URL sourceUrl, final File destinationFile) {
+
+        checkArgument(sourceUrl != null, "Missing source url");
+        checkArgument(destinationFile != null, "Missing destination file");
+
         this.sourceUrl = sourceUrl;
         this.destinationFile = destinationFile;
         setState(INITIAL);
@@ -47,10 +54,10 @@ public class Downloader implements Runnable {
     @Override
     public void run() {
 
+        setState(IN_PROGRESS);
+
         URLConnection connection = null;
         final Closer closer = Closer.create();
-
-        setState(IN_PROGRESS);
 
         try {
             connection = sourceUrl.openConnection();
@@ -59,15 +66,13 @@ public class Downloader implements Runnable {
             final FileOutputStream fileOutputStream = closer.register(new FileOutputStream(destinationFile));
 
             int readCount;
-            while (checkIfInProgressOrBlock() && 0 < (readCount = inputStream.read(buffer))) {
-                if (Thread.interrupted()) {
-                    throw new InterruptedException();
-                }
-
+            while (continueOrBlock() && 0 < (readCount = inputStream.read(buffer))) {
                 fileOutputStream.write(buffer, 0, readCount);
             }
 
-            setState(FINISHED);
+            if (IN_PROGRESS.equals(getState())) {
+                setState(FINISHED);
+            }
 
         } catch (InterruptedException e) {
             setState(CANCELLED);
@@ -99,32 +104,43 @@ public class Downloader implements Runnable {
         this.downloadState = downloadState;
     }
 
-    private boolean checkIfInProgressOrBlock() throws InterruptedException {
-        pauseLock.lock();
+    private boolean continueOrBlock() throws InterruptedException {
+        requestsGuard.lock();
         try {
-            while (pauseRequest) {
+            while (pauseRequest && !cancelRequest) {
                 setState(PAUSED);
-                pauseCondition.await();
+                requestsCondition.await();
             }
 
-            setState(IN_PROGRESS);
+            if (cancelRequest) {
+                setState(CANCELLED);
+            } else {
+                setState(IN_PROGRESS);
+            }
 
-            return true;
+            return getState() == IN_PROGRESS;
         } finally {
-            pauseLock.unlock();
+            requestsGuard.unlock();
         }
     }
 
-    public void pause() {
-        pauseLock.lock();
+    public void requestPause() {
+        requestsGuard.lock();
         pauseRequest = true;
-        pauseLock.unlock();
+        requestsGuard.unlock();
     }
 
-    public void resume() {
-        pauseLock.lock();
+    public void requestResume() {
+        requestsGuard.lock();
         pauseRequest = false;
-        pauseCondition.signalAll();
-        pauseLock.unlock();
+        requestsCondition.signalAll();
+        requestsGuard.unlock();
+    }
+
+    public void requestCancel() {
+        requestsGuard.lock();
+        cancelRequest = true;
+        requestsCondition.signalAll();
+        requestsGuard.unlock();
     }
 }
