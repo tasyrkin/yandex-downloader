@@ -8,11 +8,11 @@ import java.net.URL;
 
 import com.google.common.base.MoreObjects;
 
-public class DownloadSourceAndDestination {
+public class DownloadRequestEntry {
     private URL sourceUrl;
     private File destinationFile;
 
-    public DownloadSourceAndDestination(final URL sourceUrl, final File destinationFile) {
+    public DownloadRequestEntry(final URL sourceUrl, final File destinationFile) {
 
         checkArgument(sourceUrl != null, "Missing source url");
         checkArgument(destinationFile != null, "Missing destination file");
@@ -39,7 +39,7 @@ public class DownloadSourceAndDestination {
             return false;
         }
 
-        DownloadSourceAndDestination that = (DownloadSourceAndDestination) o;
+        DownloadRequestEntry that = (DownloadRequestEntry) o;
 
         if (!destinationFile.equals(that.destinationFile)) {
             return false;
@@ -62,7 +62,7 @@ public class DownloadSourceAndDestination {
     @Override
     public String toString() {
         //J-
-        return MoreObjects.toStringHelper(DownloadSourceAndDestination.class)
+        return MoreObjects.toStringHelper(DownloadRequestEntry.class)
                 .add("sourceUrl", sourceUrl)
                 .add("destinationFile", destinationFile)
                 .toString();

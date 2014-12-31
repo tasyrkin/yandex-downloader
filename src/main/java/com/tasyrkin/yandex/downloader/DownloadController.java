@@ -1,12 +1,10 @@
 package com.tasyrkin.yandex.downloader;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Lists.newArrayList;
 
 import static com.tasyrkin.yandex.downloader.DownloadStateEnum.INITIAL;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,8 +14,8 @@ public class DownloadController {
 
     private static final Logger LOG = LogManager.getLogger(DownloadController.class);
 
-    private final List<DownloadSourceAndDestination> sourcesAndDestinations;
-    private Map<DownloadSourceAndDestination, ThreadAndDownloader> threadsAndDownloaders;
+    private final DownloadRequest downloadRequest;
+    private Map<DownloadRequestEntry, ThreadAndDownloader> threadsAndDownloaders;
 
     private static class ThreadAndDownloader {
         private Thread thread;
@@ -37,27 +35,26 @@ public class DownloadController {
         }
     }
 
-    public DownloadController(final DownloadSourceAndDestination... sourcesAndDestinations) {
+    public DownloadController(final DownloadRequest downloadRequest) {
 
-        checkArgument(sourcesAndDestinations != null && sourcesAndDestinations.length > 0,
-            "Missing at least one download source and destination");
+        checkArgument(downloadRequest != null, "Missing download request");
 
-        this.sourcesAndDestinations = newArrayList(sourcesAndDestinations);
+        this.downloadRequest = downloadRequest;
     }
 
     public void startDownload() {
 
         threadsAndDownloaders = new HashMap<>();
 
-        for (DownloadSourceAndDestination srcAndDst : sourcesAndDestinations) {
+        for (final DownloadRequestEntry requestEntry : downloadRequest.getEntries()) {
 
-            Downloader downloader = new Downloader(srcAndDst.getSourceUrl(), srcAndDst.getDestinationFile());
+            Downloader downloader = new Downloader(requestEntry.getSourceUrl(), requestEntry.getDestinationFile());
 
             Thread thread = new Thread(downloader);
 
             thread.start();
 
-            threadsAndDownloaders.put(srcAndDst, new ThreadAndDownloader(thread, downloader));
+            threadsAndDownloaders.put(requestEntry, new ThreadAndDownloader(thread, downloader));
         }
     }
 
@@ -104,17 +101,17 @@ public class DownloadController {
         }
     }
 
-    public Map<DownloadSourceAndDestination, DownloadState> getState() {
+    public Map<DownloadRequestEntry, DownloadState> getState() {
 
-        final Map<DownloadSourceAndDestination, DownloadState> result = new HashMap<>();
+        final Map<DownloadRequestEntry, DownloadState> result = new HashMap<>();
 
         if (threadsAndDownloaders != null) {
-            for (Map.Entry<DownloadSourceAndDestination, ThreadAndDownloader> entry : threadsAndDownloaders.entrySet()) {
+            for (Map.Entry<DownloadRequestEntry, ThreadAndDownloader> entry : threadsAndDownloaders.entrySet()) {
                 result.put(entry.getKey(), entry.getValue().getDownloader().getState());
             }
         } else {
-            for (DownloadSourceAndDestination srcAndDst : sourcesAndDestinations) {
-                result.put(srcAndDst, new DownloadState(INITIAL));
+            for (DownloadRequestEntry requestEntry : downloadRequest.getEntries()) {
+                result.put(requestEntry, new DownloadState(INITIAL));
             }
         }
 
