@@ -26,7 +26,7 @@ import com.google.common.io.Closer;
 
 public class Downloader implements Runnable {
 
-    private static final Logger LOGGER = LogManager.getLogger(Downloader.class);
+    private static final Logger LOG = LogManager.getLogger(Downloader.class);
 
     private final URL sourceUrl;
     private final File destinationFile;
@@ -77,7 +77,7 @@ public class Downloader implements Runnable {
             try {
                 closer.close();
             } catch (IOException e) {
-                LOGGER.error("Failed to close input / output stream", e);
+                LOG.error("Failed to close input / output stream", e);
             }
 
             if (connection != null && connection instanceof HttpURLConnection) {
@@ -93,7 +93,7 @@ public class Downloader implements Runnable {
 
     private synchronized void setState(final DownloadState downloadState) {
         if (!downloadState.equals(this.downloadState)) {
-            LOGGER.debug("Changed state [{}] -> [{}]", this.downloadState, downloadState);
+            LOG.debug("Changed state [{}] -> [{}]", this.downloadState, downloadState);
         }
 
         this.downloadState = downloadState;

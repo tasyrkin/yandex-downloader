@@ -9,7 +9,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class DownloadController {
+
+    private static final Logger LOG = LogManager.getLogger(DownloadController.class);
+
     private final List<DownloadSourceAndDestination> sourcesAndDestinations;
     private Map<DownloadSourceAndDestination, ThreadAndDownloader> threadsAndDownloaders;
 
@@ -65,7 +71,20 @@ public class DownloadController {
 
     public void restartDownload() {
         cancelDownload();
+        joinThreads();
         startDownload();
+    }
+
+    private void joinThreads() {
+        if (threadsAndDownloaders != null) {
+            for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
+                try {
+                    threadAndDownloader.getThread().join();
+                } catch (InterruptedException e) {
+                    LOG.error("Unable to join thread for downloading url", e);
+                }
+            }
+        }
     }
 
     public void pauseDownload() {
