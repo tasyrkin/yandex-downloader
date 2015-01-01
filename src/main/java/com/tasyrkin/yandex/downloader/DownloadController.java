@@ -57,6 +57,7 @@ public class DownloadController {
      * <p>Starts downloads and its status changes from INITIAL to IN_PROGRESS.
      */
     public void startDownload() {
+        LOG.debug("Starting download for {}", threadsAndDownloaders.keySet().toArray(new DownloadRequestEntry[0]));
         for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
             threadAndDownloader.getThread().start();
         }
@@ -70,6 +71,8 @@ public class DownloadController {
      * CANCELLED.
      */
     public void requestDownloadCancel() {
+        LOG.debug("Requesting cancellation for {}",
+            threadsAndDownloaders.keySet().toArray(new DownloadRequestEntry[0]));
         for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
             threadAndDownloader.getDownloader().requestCancel();
         }
@@ -79,6 +82,8 @@ public class DownloadController {
      * <p>Restarts download by cancelling it first and then starting a new one.
      */
     public void restartDownload() {
+
+        LOG.debug("Restarting download for {}", threadsAndDownloaders.keySet().toArray(new DownloadRequestEntry[0]));
 
         requestDownloadCancel();
 
@@ -119,6 +124,9 @@ public class DownloadController {
      * IN_PROGRESS.
      */
     public void requestDownloadPause() {
+
+        LOG.debug("Requesting pause for {}", threadsAndDownloaders.keySet().toArray(new DownloadRequestEntry[0]));
+
         for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
             threadAndDownloader.getDownloader().requestPause();
         }
@@ -129,6 +137,9 @@ public class DownloadController {
      * no effect.
      */
     public void requestDownloadResume() {
+
+        LOG.debug("Requesting resume for {}", threadsAndDownloaders.keySet().toArray(new DownloadRequestEntry[0]));
+
         for (ThreadAndDownloader threadAndDownloader : threadsAndDownloaders.values()) {
             threadAndDownloader.getDownloader().requestResume();
         }

@@ -98,7 +98,7 @@ class Downloader implements Runnable {
 
     private synchronized void setState(final DownloadState downloadState) {
         if (!downloadState.equals(this.downloadState)) {
-            LOG.debug("Changed state [{}] -> [{}]", this.downloadState, downloadState);
+            LOG.debug("Changed state for [{}] [{}] -> [{}]", sourceUrl, this.downloadState, downloadState);
         }
 
         this.downloadState = downloadState;
