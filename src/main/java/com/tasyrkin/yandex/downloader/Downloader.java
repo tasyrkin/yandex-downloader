@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.common.io.Closer;
 
-public class Downloader implements Runnable {
+class Downloader implements Runnable {
 
     private static final Logger LOG = LogManager.getLogger(Downloader.class);
 
